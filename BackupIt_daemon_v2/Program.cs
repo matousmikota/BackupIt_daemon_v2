@@ -7,9 +7,8 @@ namespace BackupIt_daemon_v2
     {
         static void Main(string[] args)
         {
-            DynatreeItem di = new DynatreeItem(new DirectoryInfo(@"C:\Users\a\Music\source-testA"));
-            string result = "[" + di.JsonToDynatree() + "]";
-            Console.WriteLine(result);
+            Snapshot snapshot = new();
+            snapshot.Create(@"C:\Users\a\Music\source-testA", @"C:\Users\a\Documents\BackupIt-daemon-snapshot\snapshot.json");
         }
     }
 }

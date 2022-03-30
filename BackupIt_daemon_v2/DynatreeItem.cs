@@ -14,12 +14,15 @@ namespace BackupIt_daemon_v2
         public bool isFolder { get; set; }
         public string key { get; set; }
         public string modified { get; set; }
+        public string fullPath { get; set; }
         public List<DynatreeItem> children;
         public DynatreeItem(FileSystemInfo fsi)
         {
             title = fsi.Name;
             modified = fsi.LastWriteTime.ToString("yyyyMMddHHmmss");
+            fullPath = fsi.FullName;
             children = new List<DynatreeItem>();
+
             if (fsi.Attributes == FileAttributes.Directory)
             {
                 isFolder = true;
