@@ -1,24 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Globalization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace BackupIt_daemon_v2
 {
     public class Snapshot
     {
-        public void Create(string folderPath, string snapshopFilePath)
-        {
-            DynatreeItem di = new DynatreeItem(new DirectoryInfo(folderPath));
-            string snapshotText = "[" + di.JsonToDynatree() + "]";
+        [JsonProperty("children")]
+        public Snapshot[] Children { get; set; }
 
-            using (StreamWriter writer = new(snapshopFilePath))
-            {
-                writer.Write(snapshotText);
-            }
-        }
+        [JsonProperty("name")]
+        public string Name { get; set; }
 
+        [JsonProperty("isFolder")]
+        public bool IsFolder { get; set; }
+
+        [JsonProperty("key")]
+        public string Key { get; set; }
+
+        [JsonProperty("modified")]
+        public string Modified { get; set; }
+
+        [JsonProperty("fullPath")]
+        public string FullPath { get; set; }
     }
 }

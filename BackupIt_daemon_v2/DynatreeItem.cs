@@ -10,7 +10,7 @@ namespace BackupIt_daemon_v2
 {
     public class DynatreeItem
     {
-        public string title { get; set; }
+        public string name { get; set; }
         public bool isFolder { get; set; }
         public string key { get; set; }
         public string modified { get; set; }
@@ -18,7 +18,7 @@ namespace BackupIt_daemon_v2
         public List<DynatreeItem> children;
         public DynatreeItem(FileSystemInfo fsi)
         {
-            title = fsi.Name;
+            name = fsi.Name;
             modified = fsi.LastWriteTime.ToString("yyyyMMddHHmmss");
             fullPath = fsi.FullName;
             children = new List<DynatreeItem>();
@@ -35,7 +35,7 @@ namespace BackupIt_daemon_v2
             {
                 isFolder = false;
             }
-            key = title.Replace(" ", "").ToLower();
+            key = name.Replace(" ", "").ToLower();
         }
         
         public string JsonToDynatree()

@@ -6,7 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="JsonDiffer" Version="1.0.1" />
+    <PackageReference Include="JsonDiffPatch.Net" Version="2.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="XMLDiffPatch" Version="1.0.8.28" />
   </ItemGroup>
 
 </Project>

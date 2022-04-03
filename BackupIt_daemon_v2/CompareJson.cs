@@ -6,11 +6,26 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.XmlDiffPatch;
 using Newtonsoft.Json;
+using System.Xml;
+using JsonDiffPatchDotNet;
+using JsonDiffPatchDotNet.Formatters;
 
 namespace BackupIt_daemon_v2
 {
     public class CompareJson
     {
+
+        JsonDiffPatch jsonDiffPatch { get; set; } = new JsonDiffPatch();
+
+        public void Compare(string oldJson, string newJson, string snapshopFilePath)
+        {
+            using (StreamWriter writer = new(snapshopFilePath))
+            {
+                writer.Write(jsonDiffPatch.Diff(oldJson, newJson));
+            }
+        }
+
+        /*
         public bool Compare(string expected, string actual)
         {
             var expectedDoc = JsonConvert.DeserializeXmlNode(expected, "root");
@@ -29,5 +44,6 @@ namespace BackupIt_daemon_v2
                 return result;
             }
         }
+        */
     }
 }
