@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
-using System.Xml;
 
 namespace BackupIt_daemon_v2
 {
@@ -13,7 +12,7 @@ namespace BackupIt_daemon_v2
     {
         static void Main(string[] args)
         {
-            CompareJson compareJson = new();
+            CompareNodes compareJson = new();
             compareJson.Compare(@"C:\Users\a\Documents\BackupIt-daemon-snapshot\newSnap\left.json", @"C:\Users\a\Documents\BackupIt-daemon-snapshot\newSnap\right.json");
 
 

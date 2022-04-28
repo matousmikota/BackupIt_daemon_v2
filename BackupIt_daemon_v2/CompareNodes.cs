@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.XmlDiffPatch;
 using Newtonsoft.Json;
 using System.Xml;
 //using JsonDiffPatchDotNet;
@@ -14,7 +13,7 @@ using Newtonsoft.Json.Linq;
 
 namespace BackupIt_daemon_v2
 {
-    public class CompareJson
+    public class CompareNodes
     {
 
         //JsonDiffPatch jsonDiffPatch { get; set; } = new JsonDiffPatch();
@@ -33,14 +32,29 @@ namespace BackupIt_daemon_v2
             List<FileSystemNode> leftNodes = JsonToList(leftPath);
             List<FileSystemNode> rightNodes = JsonToList(rightPath);
 
-            List<FileSystemNode> added = rightNodes.Except(leftNodes).ToList();
-            List<FileSystemNode> removed = leftNodes.Except(rightNodes).ToList(); //TODO: Could do this in the foreach. When rightNodes.Find returns null.
+            List<FileSystemNode> added = CompareAdded(leftNodes, rightNodes);
+            List<FileSystemNode> removed = CompareRemoved(leftNodes, rightNodes);
+            List<FileSystemNode> modified = CompareModified(leftNodes, rightNodes);
+        }
 
+        public List<FileSystemNode> CompareAdded(List<FileSystemNode> leftNodes, List<FileSystemNode> rightNodes)
+        {
+            return rightNodes.Except(leftNodes).ToList();
+        }
+
+        public List<FileSystemNode> CompareRemoved(List<FileSystemNode> leftNodes, List<FileSystemNode> rightNodes)
+        {
+            return leftNodes.Except(rightNodes).ToList();
+        }
+
+        public List<FileSystemNode> CompareModified(List<FileSystemNode> leftNodes, List<FileSystemNode> rightNodes)
+        {
             List<FileSystemNode> modified = new();
 
             foreach (FileSystemNode leftNode in leftNodes)
             {
-                FileSystemNode rightNode = rightNodes.Find(x => x.FullPath == leftNode.FullPath);
+                FileSystemNode rightNode = rightNodes.Find(x => x.FullPath == leftNode.FullPath); //TODO: What if finds nothing?
+
                 DateTime rightDate = DateTime.Parse(rightNode.LastModified);
                 DateTime leftDate = DateTime.Parse(leftNode.LastModified);
 
@@ -50,9 +64,10 @@ namespace BackupIt_daemon_v2
                 }
             }
 
+            return modified;
         }
 
-        private List<FileSystemNode> JsonToList(string path)
+        public List<FileSystemNode> JsonToList(string path)
         {
             string json;
             using (StreamReader sr = new(path))
