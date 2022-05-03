@@ -10,11 +10,16 @@ namespace BackupIt_daemon_v2
 {
     public class Snapshoter
     {
-        public List<FileSystemNode> Nodes { get; set; } = new();
+        public List<FileSystemNode> Nodes { get; set; }
 
-        public Snapshoter(string sourcePath, string outputPath)
+        public Snapshoter(List<string> sources, string outputPath)
         {
-            this.Create(new DirectoryInfo(sourcePath));
+            Nodes = new List<FileSystemNode>();
+
+            foreach (string source in sources)
+            {
+                this.Create(new DirectoryInfo(source));
+            }
 
             using (StreamWriter sw = new(outputPath))
             {
@@ -45,7 +50,7 @@ namespace BackupIt_daemon_v2
             }
         }
 
-        private string NodesToJson()
+        public string NodesToJson()
         {
             return JsonConvert.SerializeObject(this.Nodes, Formatting.None);
         }

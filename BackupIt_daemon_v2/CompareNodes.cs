@@ -55,9 +55,9 @@ namespace BackupIt_daemon_v2
             {
                 FileSystemNode rightNode = rightNodes.Find(x => x.FullPath == leftNode.FullPath); //TODO: What if finds nothing?
 
-                DateTime rightDate = DateTime.Parse(rightNode.LastModified);
-                DateTime leftDate = DateTime.Parse(leftNode.LastModified);
-
+                DateTime rightDate = DateTime.ParseExact(rightNode.LastModified, "yyyyMMddHHmmss", null);
+                DateTime leftDate = DateTime.ParseExact(leftNode.LastModified, "yyyyMMddHHmmss", null);
+                
                 if (DateTime.Compare(leftDate, rightDate) > 0)
                 {
                     modified.Add(rightNode);
@@ -78,9 +78,12 @@ namespace BackupIt_daemon_v2
             JArray jArray = (JArray)JsonConvert.DeserializeObject(json);
 
             List<FileSystemNode> nodes = new();
-            foreach (JToken item in jArray)
+            if (jArray is not null)
             {
-                nodes.Add(item.ToObject<FileSystemNode>());
+                foreach (JToken item in jArray)
+                {
+                    nodes.Add(item.ToObject<FileSystemNode>());
+                }
             }
 
             return nodes;
