@@ -39,11 +39,29 @@ namespace BackupIt_daemon_v2
 
         public List<FileSystemNode> CompareAdded(List<FileSystemNode> leftNodes, List<FileSystemNode> rightNodes)
         {
+            //Action is different. Set everywhere to null.
+            foreach (FileSystemNode node in leftNodes)
+            {
+                node.Action = null;
+            }
+            foreach (FileSystemNode node in rightNodes)
+            {
+                node.Action = null;
+            }
             return rightNodes.Except(leftNodes).ToList();
         }
 
         public List<FileSystemNode> CompareRemoved(List<FileSystemNode> leftNodes, List<FileSystemNode> rightNodes)
         {
+            //Action is different. Set everywhere to null.
+            foreach (FileSystemNode node in leftNodes)
+            {
+                node.Action = null;
+            }
+            foreach (FileSystemNode node in rightNodes)
+            {
+                node.Action = null;
+            }
             return leftNodes.Except(rightNodes).ToList();
         }
 

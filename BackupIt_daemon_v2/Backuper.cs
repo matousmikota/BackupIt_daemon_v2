@@ -129,7 +129,7 @@ namespace BackupIt_daemon_v2
             }
 
             foreach (FileSystemNode node in modified)
-            {
+            {  
                 if (!node.IsDirectory) //Directories do not matter. And if I were to copy a directory it might copy its contents with it.
                 {
                     foreach (string destination in destinations)
