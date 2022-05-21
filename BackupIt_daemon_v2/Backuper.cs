@@ -18,13 +18,19 @@ namespace BackupIt_daemon_v2
         private bool FullExists { get; set; }
         private string LeftJsonPath { get; set; }
         private string RightJsonPath { get; set; }
-        public Backuper(string name, string type, List<string> sources, List<string> destinations, bool fullExists)
+        private int RetentionCount { get; set; }
+        private bool Compress { get; set; }
+        private int BackupsAfterFull { get; set; }
+        
+        public Backuper(string name, string type, List<string> sources, List<string> destinations, bool fullExists, int retentionCount, bool compress)
         {
             this.Name = name;
             this.Type = type;
             this.Sources = sources;
             this.Destinations = destinations;
             this.FullExists = fullExists;
+            this.RetentionCount = retentionCount;
+            this.Compress = compress;
 
             this.DataFolder = Path.Combine(Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), typeof(Backuper).Namespace);
             this.LeftJsonPath = Path.Combine(this.DataFolder, "left.json");
@@ -64,10 +70,16 @@ namespace BackupIt_daemon_v2
         }
         private void Differential()
         {
+            if (this.BackupsAfterFull >= this.RetentionCount)
+            {
+                this.FullExists = false;
+            }
+
             if (this.FullExists)
             {
                 Snapshoter snapshoter = new(this.Sources, Path.Combine(this.DataFolder, "right.json"));
                 this.Backup(this.Destinations, this.LeftJsonPath, this.RightJsonPath, Path.Combine("Differential", DateTime.Now.ToString("yyyy-MM-dd-HH-mm_ss")));
+                this.BackupsAfterFull++;
             }
             else
             {
@@ -77,10 +89,16 @@ namespace BackupIt_daemon_v2
         }
         private void Incremental()
         {
+            if (this.BackupsAfterFull >= this.RetentionCount)
+            {
+                this.FullExists = false;
+            }
+
             if (this.FullExists)
             {
                 Snapshoter snapshoter = new(this.Sources, Path.Combine(this.DataFolder, "right.json"));
                 this.Backup(this.Destinations, this.LeftJsonPath, this.RightJsonPath, Path.Combine("Incremental", DateTime.Now.ToString("yyyy-MM-dd-HH-mm_ss")));
+                this.BackupsAfterFull++;
             }
             else
             {

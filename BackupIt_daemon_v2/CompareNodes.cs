@@ -73,13 +73,18 @@ namespace BackupIt_daemon_v2
             {
                 FileSystemNode rightNode = rightNodes.Find(x => x.FullPath == leftNode.FullPath); //TODO: What if finds nothing?
 
-                DateTime rightDate = DateTime.ParseExact(rightNode.LastModified, "yyyyMMddHHmmss", null);
-                DateTime leftDate = DateTime.ParseExact(leftNode.LastModified, "yyyyMMddHHmmss", null);
-                
-                if (DateTime.Compare(leftDate, rightDate) > 0)
+                try
                 {
-                    modified.Add(rightNode);
+                    DateTime rightDate = DateTime.ParseExact(rightNode.LastModified, "yyyyMMddHHmmss", null);
+                    DateTime leftDate = DateTime.ParseExact(leftNode.LastModified, "yyyyMMddHHmmss", null);
+
+                    if (DateTime.Compare(leftDate, rightDate) > 0)
+                    {
+                        modified.Add(rightNode);
+                    }
                 }
+                catch (System.NullReferenceException) { }
+                
             }
 
             return modified;
