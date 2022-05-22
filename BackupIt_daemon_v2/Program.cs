@@ -13,14 +13,12 @@ namespace BackupIt_daemon_v2
     {
         static void Main(string[] args)
         {
-            Backuper backuper = new("Zaloha", "incremental", new List<string> { @"C:\Users\a\Music\source-testA" }, new List<string> { @"C:\Users\a\Videos\destinationA" }, false, 5, false);
+            Backuper backuper = new("Zaloha", "incremental", new List<string> { @"C:\Users\a\Music\source-testA" }, new List<string> { @"C:\Users\a\Videos\destinationA" }, false, 20, true);
 
             while (true)
             {
                 backuper.Run();
             }
-            
-            
             
 
             /*

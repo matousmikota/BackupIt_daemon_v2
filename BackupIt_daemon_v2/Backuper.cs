@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Ionic.Zip;
 using Newtonsoft.Json;
 
 namespace BackupIt_daemon_v2
@@ -66,19 +67,16 @@ namespace BackupIt_daemon_v2
             fs.Close();
             Snapshoter snapshoter = new(this.Sources, Path.Combine(this.DataFolder, "right.json"));
 
-            this.Backup(this.Destinations, this.LeftJsonPath, this.RightJsonPath, "Full");
+            this.Backup(this.LeftJsonPath, this.RightJsonPath, "full");
         }
         private void Differential()
         {
-            if (this.BackupsAfterFull >= this.RetentionCount)
-            {
-                this.FullExists = false;
-            }
+            RetentionCheck();
 
             if (this.FullExists)
             {
                 Snapshoter snapshoter = new(this.Sources, Path.Combine(this.DataFolder, "right.json"));
-                this.Backup(this.Destinations, this.LeftJsonPath, this.RightJsonPath, Path.Combine("Differential", DateTime.Now.ToString("yyyy-MM-dd-HH-mm_ss")));
+                this.Backup(this.LeftJsonPath, this.RightJsonPath, "differential");
                 this.BackupsAfterFull++;
             }
             else
@@ -89,15 +87,12 @@ namespace BackupIt_daemon_v2
         }
         private void Incremental()
         {
-            if (this.BackupsAfterFull >= this.RetentionCount)
-            {
-                this.FullExists = false;
-            }
+            RetentionCheck();
 
             if (this.FullExists)
             {
                 Snapshoter snapshoter = new(this.Sources, Path.Combine(this.DataFolder, "right.json"));
-                this.Backup(this.Destinations, this.LeftJsonPath, this.RightJsonPath, Path.Combine("Incremental", DateTime.Now.ToString("yyyy-MM-dd-HH-mm_ss")));
+                this.Backup(this.LeftJsonPath, this.RightJsonPath, "incremental");
                 this.BackupsAfterFull++;
             }
             else
@@ -108,8 +103,11 @@ namespace BackupIt_daemon_v2
         }
 
         //If there are multiple sources they will already be inside the json so I should not be dealing with that in here, it shold be dealt with inside Snapshoter.cs
-        private void Backup(List<string> destinations, string leftPath, string rightPath, string packageFolder)
+        private void Backup(string leftPath, string rightPath, string type)
         {
+            string dateTime = DateTime.Now.ToString("yyyy-MM-dd-HH-mm_ss");
+            string packageFolder = Path.Combine(type, dateTime);
+
             //Cannot copy to one folder first and then copy to the other ones because it might not have read permission to the destination folder
             CompareNodes compare = new();
             Metadata metadata = new(Path.Combine(this.DataFolder, "metadata.json"));
@@ -121,51 +119,29 @@ namespace BackupIt_daemon_v2
             List<FileSystemNode> removed = compare.CompareRemoved(leftNodes, rightNodes);
             List<FileSystemNode> modified = compare.CompareModified(leftNodes, rightNodes);
 
-            //First create all folders (all nodes with IsDirectory = true)
-            //then create all files (all nodes with IsDirectory = false)
-
-            foreach (FileSystemNode node in added) //Folders have to be created before files are copied. That is why there have to be two foreach cycles. Actually maybe no because the folders I guess create automatically if they are missing? //an empty directory could have been added
+            if (this.Compress)
             {
-                if (node.IsDirectory)
+                string temp = Path.Combine(this.DataFolder, "temp");
+                BackupUtility(added, removed, modified, packageFolder, new List<string> { temp }, type);
+
+                using (ZipFile zip = new())
                 {
-                    foreach (string destination in destinations)
+                    zip.AddDirectory(temp);
+
+                    //foreach save to every destination
+                    foreach (string destination in this.Destinations)
                     {
-                        Directory.CreateDirectory(Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)));
+                        string path = Path.Combine(destination, type);
+                        Directory.CreateDirectory(path);
+                        zip.Save(Path.Combine(path, $"{dateTime}.zip"));
                     }
                 }
-            }
 
-            foreach (FileSystemNode node in added)
+                Directory.Delete(temp, true);
+            }
+            else if (!this.Compress)
             {
-                if (!node.IsDirectory)
-                {
-                    foreach (string destination in destinations)
-                    {
-                        File.Copy(node.FullPath, Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)), true);
-                    }
-                }
-            }
-
-            foreach (FileSystemNode node in modified)
-            {  
-                if (!node.IsDirectory) //Directories do not matter. And if I were to copy a directory it might copy its contents with it.
-                {
-                    foreach (string destination in destinations)
-                    {
-                        File.Copy(node.FullPath, Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)), true);
-                    }
-                }
-            }
-
-            if (this.Type=="full") //if it is not full it should not be touching the first full backup
-            {
-                foreach (FileSystemNode node in removed)
-                {
-                    foreach (string destination in destinations)
-                    {
-                        File.Delete(Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)));
-                    }
-                }
+                BackupUtility(added, removed, modified, packageFolder, this.Destinations, type);
             }
 
             metadata.AddMetadata(added, "added"); //TODO: Remove static input. Maybe get the name of the list.
@@ -178,14 +154,14 @@ namespace BackupIt_daemon_v2
             {
                 sw.Write(JsonConvert.SerializeObject(rightNodes, Formatting.None));
             }*/
-            if (this.Type == "differential" && !this.FullExists)
+            if (type == "differential" && !this.FullExists)
             {
                 leftNodes = rightNodes;
             }
             //differential left as final
             //incremental rigth as final
             //full empty as final
-            switch (this.Type)
+            switch (type)
             {
                 case "full":;
                     File.Delete(Path.Combine(this.DataFolder, "left.json"));
@@ -217,14 +193,77 @@ namespace BackupIt_daemon_v2
                     }
                     break;
             }
-
         }
-
         private string ShortenPath(string path)
         {
             string noLetterPath = path.Substring(Path.GetPathRoot(path).Length);
 
             return noLetterPath;
+        }
+
+        private void RetentionCheck()
+        {
+            if (this.BackupsAfterFull >= this.RetentionCount)
+            {
+                this.FullExists = false;
+                this.BackupsAfterFull = 0;
+
+                foreach (string destination in this.Destinations)
+                {
+                    Directory.Delete(destination, true);
+                    Directory.CreateDirectory(destination);
+                }
+            }
+        }
+
+        private void BackupUtility(List<FileSystemNode> added, List<FileSystemNode> removed, List<FileSystemNode> modified, string packageFolder, List<string> destinations, string type)
+        {
+            //First create all folders (all nodes with IsDirectory = true)
+            //then create all files (all nodes with IsDirectory = false)
+
+            foreach (FileSystemNode node in added) //Folders have to be created before files are copied. That is why there have to be two foreach cycles. Actually maybe no because the folders I guess create automatically if they are missing? //an empty directory could have been added
+            {
+                if (node.IsDirectory)
+                {
+                    foreach (string destination in destinations)
+                    {
+                        Directory.CreateDirectory(Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)));
+                    }
+                }
+            }
+
+            foreach (FileSystemNode node in added)
+            {
+                if (!node.IsDirectory)
+                {
+                    foreach (string destination in destinations)
+                    {
+                        File.Copy(node.FullPath, Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)), true);
+                    }
+                }
+            }
+
+            foreach (FileSystemNode node in modified)
+            {
+                if (!node.IsDirectory) //Directories do not matter. And if I were to copy a directory it might copy its contents with it.
+                {
+                    foreach (string destination in destinations)
+                    {
+                        File.Copy(node.FullPath, Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)), true);
+                    }
+                }
+            }
+
+            if (type == "full") //if it is not full it should not be touching the first full backup
+            {
+                foreach (FileSystemNode node in removed)
+                {
+                    foreach (string destination in destinations)
+                    {
+                        File.Delete(Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)));
+                    }
+                }
+            }
         }
 
     }
