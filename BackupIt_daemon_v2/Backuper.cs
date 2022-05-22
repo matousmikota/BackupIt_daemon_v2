@@ -4,8 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BackupIt_daemon_v2.Models;
 using Ionic.Zip;
 using Newtonsoft.Json;
+using System.Net.Sockets;
+using System.Net;
 
 namespace BackupIt_daemon_v2
 {
@@ -22,6 +25,7 @@ namespace BackupIt_daemon_v2
         private int RetentionCount { get; set; }
         private bool Compress { get; set; }
         private int BackupsAfterFull { get; set; }
+        private DateTime StartDate { get; set; }
         
         public Backuper(string name, string type, List<string> sources, List<string> destinations, bool fullExists, int retentionCount, bool compress)
         {
@@ -38,6 +42,7 @@ namespace BackupIt_daemon_v2
             this.RightJsonPath = Path.Combine(this.DataFolder, "right.json");
 
             Directory.CreateDirectory(this.DataFolder);
+            this.StartDate = DateTime.Now;
         }
 
         public void Run()
@@ -105,7 +110,7 @@ namespace BackupIt_daemon_v2
         //If there are multiple sources they will already be inside the json so I should not be dealing with that in here, it shold be dealt with inside Snapshoter.cs
         private void Backup(string leftPath, string rightPath, string type)
         {
-            string dateTime = DateTime.Now.ToString("yyyy-MM-dd-HH-mm_ss");
+            string dateTime = this.StartDate.ToString("yyyy-MM-dd-HH-mm_ss");
             string packageFolder = Path.Combine(type, dateTime);
 
             //Cannot copy to one folder first and then copy to the other ones because it might not have read permission to the destination folder
@@ -193,6 +198,8 @@ namespace BackupIt_daemon_v2
                     }
                     break;
             }
+
+            //CreateLog(true, this.StartDate, DateTime.Now, "");
         }
         private string ShortenPath(string path)
         {
@@ -263,6 +270,46 @@ namespace BackupIt_daemon_v2
                         File.Delete(Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)));
                     }
                 }
+            }
+        }
+
+        private void CreateLog(bool wasSuccessful, DateTime start, DateTime end, string errorCode)
+        {
+            API api = new();
+
+            Client client = api.GetLocalClient();
+            Config config = new(); //TODO: Get config from Petr
+
+            PostLog(new Log(client.id, config.Id, wasSuccessful, start, end, errorCode));
+        }
+        private void PostLog(Log log)
+        {
+            var url = "http://localhost:5000/data/Log";
+
+            var httpRequest = (HttpWebRequest)WebRequest.Create(url);
+            httpRequest.Method = "POST";
+
+            httpRequest.Accept = "text/plain";
+            httpRequest.ContentType = "application/json";
+
+            string data = JsonConvert.SerializeObject(log);
+
+            using (var streamWriter = new StreamWriter(httpRequest.GetRequestStream()))
+            {
+                streamWriter.Write(data);
+            }
+
+            try
+            {
+                var httpResponse = (HttpWebResponse)httpRequest.GetResponse();
+                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+                {
+                    var result = streamReader.ReadToEnd();
+                }
+            }
+            catch (System.Net.WebException)
+            {
+                throw new System.Net.WebException("Cannot post a log that has already been posted."); //should be written into metadata
             }
         }
 

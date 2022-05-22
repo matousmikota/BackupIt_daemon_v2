@@ -33,6 +33,13 @@ namespace BackupIt_daemon_v2
 
         }
 
+        public Client GetLocalClient()
+        {
+            string mac = GetLocalMAC();
+
+            return GetClient(mac);
+        }
+
         public string GetLocalMAC()
         {
             string addr = "";
