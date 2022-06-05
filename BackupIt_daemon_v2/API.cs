@@ -76,7 +76,7 @@ namespace BackupIt_daemon_v2
         {
             try
             {
-                var url = $"http://localhost:5000/data/Client/mac/{mac_address}";
+                var url = $"http://localhost:18788/data/Client/mac/{mac_address}";
 
                 var httpRequest = (HttpWebRequest)WebRequest.Create(url);
 
@@ -106,7 +106,7 @@ namespace BackupIt_daemon_v2
 
         public void PostClient(Client client)
         {
-            var url = "http://localhost:5000/data/Client";
+            var url = "http://localhost:18788/data/Client";
 
             var httpRequest = (HttpWebRequest)WebRequest.Create(url);
             httpRequest.Method = "POST";
@@ -137,7 +137,7 @@ namespace BackupIt_daemon_v2
 
         public void PutClient(Client client)
         {
-            var url = $"http://localhost:5000/data/Client/{client.id}";
+            var url = $"http://localhost:18788/data/Client/{client.id}";
 
             var httpRequest = (HttpWebRequest)WebRequest.Create(url);
             httpRequest.Method = "PUT";
@@ -187,7 +187,7 @@ namespace BackupIt_daemon_v2
 
         public void PostLog(Log log)
         {
-            var url = "http://localhost:5000/data/Log";
+            var url = "http://localhost:18788/data/Log";
 
             var httpRequest = (HttpWebRequest)WebRequest.Create(url);
             httpRequest.Method = "POST";
@@ -226,7 +226,7 @@ namespace BackupIt_daemon_v2
         {
             try
             {
-                var url = $"http://localhost:5000/data/DConfigs";
+                var url = $"http://localhost:18788/data/DConfigs";
 
                 var httpRequest = (HttpWebRequest)WebRequest.Create(url);
 
@@ -253,7 +253,7 @@ namespace BackupIt_daemon_v2
         {
             try
             {
-                var url = $"http://localhost:5000/data/Destinations";
+                var url = $"http://localhost:18788/data/Destinations";
 
                 var httpRequest = (HttpWebRequest)WebRequest.Create(url);
 
@@ -280,7 +280,7 @@ namespace BackupIt_daemon_v2
         {
             try
             {
-                var url = $"http://localhost:5000/data/Source";
+                var url = $"http://localhost:18788/data/Source";
 
                 var httpRequest = (HttpWebRequest)WebRequest.Create(url);
 
