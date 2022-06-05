@@ -15,7 +15,6 @@ namespace BackupIt_daemon_v2
     public class Backuper
     {
         private string DataFolder { get; set; }
-        private string Name { get; set; }
         private string Type { get; set; }
         private List<string> Sources { get; set; }
         private List<string> Destinations { get; set; }
@@ -26,21 +25,28 @@ namespace BackupIt_daemon_v2
         private bool Compress { get; set; }
         private int BackupsAfterFull { get; set; }
         private DateTime StartDate { get; set; }
+        public Config Config { get; set; }
         
-        public Backuper(string name, string type, List<string> sources, List<string> destinations, bool fullExists, int retentionCount, bool compress)
+        public Backuper(string type, List<string> sources, List<string> destinations, bool fullExists, int retentionCount, bool compress, Config config)
         {
-            this.Name = name;
             this.Type = type;
             this.Sources = sources;
             this.Destinations = destinations;
             this.FullExists = fullExists;
             this.RetentionCount = retentionCount;
             this.Compress = compress;
+            this.Config = config;
 
-            this.DataFolder = Path.Combine(Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), typeof(Backuper).Namespace);
+            this.DataFolder = Path.Combine(Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), typeof(Backuper).Namespace, Config.Id.ToString());
             this.LeftJsonPath = Path.Combine(this.DataFolder, "left.json");
             this.RightJsonPath = Path.Combine(this.DataFolder, "right.json");
 
+            try
+            {
+                Directory.Delete(this.DataFolder, true);
+            }
+            catch (System.IO.DirectoryNotFoundException) { }
+            
             Directory.CreateDirectory(this.DataFolder);
             this.StartDate = DateTime.Now;
         }
@@ -127,6 +133,7 @@ namespace BackupIt_daemon_v2
             if (this.Compress)
             {
                 string temp = Path.Combine(this.DataFolder, "temp");
+                Directory.CreateDirectory(temp);
                 BackupUtility(added, removed, modified, packageFolder, new List<string> { temp }, type);
 
                 using (ZipFile zip = new())
@@ -199,7 +206,7 @@ namespace BackupIt_daemon_v2
                     break;
             }
 
-            //CreateLog(true, this.StartDate, DateTime.Now, "");
+            CreateLog(true, this.StartDate, DateTime.Now, "");
         }
         private string ShortenPath(string path)
         {
@@ -276,41 +283,7 @@ namespace BackupIt_daemon_v2
         private void CreateLog(bool wasSuccessful, DateTime start, DateTime end, string errorCode)
         {
             API api = new();
-
-            Client client = api.GetLocalClient();
-            Config config = new(); //TODO: Get config from Petr
-
-            PostLog(new Log(client.id, config.Id, wasSuccessful, start, end, errorCode));
-        }
-        private void PostLog(Log log)
-        {
-            var url = "http://localhost:5000/data/Log";
-
-            var httpRequest = (HttpWebRequest)WebRequest.Create(url);
-            httpRequest.Method = "POST";
-
-            httpRequest.Accept = "text/plain";
-            httpRequest.ContentType = "application/json";
-
-            string data = JsonConvert.SerializeObject(log);
-
-            using (var streamWriter = new StreamWriter(httpRequest.GetRequestStream()))
-            {
-                streamWriter.Write(data);
-            }
-
-            try
-            {
-                var httpResponse = (HttpWebResponse)httpRequest.GetResponse();
-                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-                {
-                    var result = streamReader.ReadToEnd();
-                }
-            }
-            catch (System.Net.WebException)
-            {
-                throw new System.Net.WebException("Cannot post a log that has already been posted."); //should be written into metadata
-            }
+            api.PostLog(new Log(api.GetLocalClientID(), this.Config.Id, wasSuccessful, start, end, errorCode));
         }
 
     }

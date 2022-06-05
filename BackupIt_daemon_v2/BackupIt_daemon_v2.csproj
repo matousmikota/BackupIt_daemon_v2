@@ -9,6 +9,7 @@
     <PackageReference Include="DotNetZip" Version="1.16.0" />
     <PackageReference Include="JsonDiffer" Version="1.0.1" />
     <PackageReference Include="JsonDiffPatch.Net" Version="2.3.0" />
+    <PackageReference Include="NCrontab.Signed" Version="3.3.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 

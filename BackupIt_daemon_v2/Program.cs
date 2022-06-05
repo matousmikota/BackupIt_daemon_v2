@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using BackupIt_daemon_v2.Models;
 
 namespace BackupIt_daemon_v2
 {
@@ -13,18 +14,20 @@ namespace BackupIt_daemon_v2
     {
         static void Main(string[] args)
         {
-            Backuper backuper = new("Zaloha", "incremental", new List<string> { @"C:\Users\a\Music\source-testA" }, new List<string> { @"C:\Users\a\Videos\destinationA" }, false, 20, true);
+            
+            Planner planner = new Planner();
+            planner.Run();
+
+
+            /*
+            Backuper backuper = new("incremental", new List<string> { @"C:\Users\a\Music\source-testA" }, new List<string> { @"C:\Users\a\Videos\destinationA" }, false, 20, true, new Config());
 
             while (true)
             {
                 backuper.Run();
             }
-            
-
-            /*
-            API api = new API();
-            api.Initialize();
             */
+
         }
     }
 }
