@@ -14,20 +14,8 @@ namespace BackupIt_daemon_v2
     {
         static void Main(string[] args)
         {
-            
             Planner planner = new Planner();
             planner.Run();
-
-
-            /*
-            Backuper backuper = new("incremental", new List<string> { @"C:\Users\a\Music\source-testA" }, new List<string> { @"C:\Users\a\Videos\destinationA" }, false, 20, true, new Config());
-
-            while (true)
-            {
-                backuper.Run();
-            }
-            */
-
         }
     }
 }
