@@ -235,7 +235,7 @@ namespace BackupIt_daemon_v2
             //First create all folders (all nodes with IsDirectory = true)
             //then create all files (all nodes with IsDirectory = false)
 
-            foreach (FileSystemNode node in added) //Folders have to be created before files are copied. That is why there have to be two foreach cycles. Actually maybe no because the folders I guess create automatically if they are missing? //an empty directory could have been added
+            /*foreach (FileSystemNode node in added) //Folders have to be created before files are copied. That is why there have to be two foreach cycles. Actually maybe no because the folders I guess create automatically if they are missing? //an empty directory could have been added
             {
                 if (node.IsDirectory)
                 {
@@ -244,7 +244,7 @@ namespace BackupIt_daemon_v2
                         Directory.CreateDirectory(Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)));
                     }
                 }
-            }
+            }*/
 
             foreach (FileSystemNode node in added)
             {
@@ -252,6 +252,7 @@ namespace BackupIt_daemon_v2
                 {
                     foreach (string destination in destinations)
                     {
+                        //Directory.CreateDirectory(new FileInfo(node.FullPath).Directory.FullName);
                         File.Copy(node.FullPath, Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)), true);
                     }
                 }

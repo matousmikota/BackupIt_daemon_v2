@@ -21,10 +21,20 @@ namespace BackupIt_daemon_v2
                 this.Create(new DirectoryInfo(source));
             }
 
-            using (StreamWriter sw = new(outputPath))
+            try
             {
-                sw.Write(this.NodesToJson());
+                using (StreamWriter sw = new(outputPath))
+                {
+                    sw.Write(this.NodesToJson());
+                }
             }
+            catch (System.IO.IOException)
+            {
+                API api = new();
+                api.PostLog(new(0, 0, false, DateTime.Now, DateTime.Now, @"The process cannot access the json file because it is being used by another process"));
+                return;
+            }
+            
         }
 
         private void Create(FileSystemInfo fsi)
