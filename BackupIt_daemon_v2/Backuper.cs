@@ -116,6 +116,7 @@ namespace BackupIt_daemon_v2
         //If there are multiple sources they will already be inside the json so I should not be dealing with that in here, it shold be dealt with inside Snapshoter.cs
         private void Backup(string leftPath, string rightPath, string type)
         {
+            this.StartDate = DateTime.Now;
             string dateTime = this.StartDate.ToString("yyyy-MM-dd-HH-mm_ss");
             string packageFolder = Path.Combine(type, dateTime);
 
@@ -166,14 +167,14 @@ namespace BackupIt_daemon_v2
             {
                 sw.Write(JsonConvert.SerializeObject(rightNodes, Formatting.None));
             }*/
-            if (type == "differential" && !this.FullExists)
+            if (this.Type == "differential" && !this.FullExists)
             {
                 leftNodes = rightNodes;
             }
             //differential left as final
             //incremental rigth as final
             //full empty as final
-            switch (type)
+            switch (this.Type)
             {
                 case "full":;
                     File.Delete(Path.Combine(this.DataFolder, "left.json"));
@@ -235,7 +236,7 @@ namespace BackupIt_daemon_v2
             //First create all folders (all nodes with IsDirectory = true)
             //then create all files (all nodes with IsDirectory = false)
 
-            /*foreach (FileSystemNode node in added) //Folders have to be created before files are copied. That is why there have to be two foreach cycles. Actually maybe no because the folders I guess create automatically if they are missing? //an empty directory could have been added
+            foreach (FileSystemNode node in added) //Folders have to be created before files are copied. That is why there have to be two foreach cycles. Actually maybe no because the folders I guess create automatically if they are missing? //an empty directory could have been added
             {
                 if (node.IsDirectory)
                 {
@@ -244,7 +245,7 @@ namespace BackupIt_daemon_v2
                         Directory.CreateDirectory(Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)));
                     }
                 }
-            }*/
+            }
 
             foreach (FileSystemNode node in added)
             {
@@ -252,8 +253,9 @@ namespace BackupIt_daemon_v2
                 {
                     foreach (string destination in destinations)
                     {
-                        //Directory.CreateDirectory(new FileInfo(node.FullPath).Directory.FullName);
-                        File.Copy(node.FullPath, Path.Combine(destination, packageFolder, ShortenPath(node.FullPath)), true);
+                        string filePath = Path.Combine(destination, packageFolder, ShortenPath(node.FullPath));
+                        Directory.CreateDirectory(new FileInfo(filePath).Directory.FullName);
+                        File.Copy(node.FullPath, filePath, true);
                     }
                 }
             }
